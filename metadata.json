@@ -1,0 +1,6 @@
+{
+  "name": "도란도란 숲속탐험대",
+  "description": "아이들을 위한 가나다숲 & 수리수리동굴 신나는 에듀테인먼트 모험 게임",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
