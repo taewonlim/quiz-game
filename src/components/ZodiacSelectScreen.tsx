@@ -77,13 +77,13 @@ export const ZodiacSelectScreen: React.FC<ZodiacSelectScreenProps> = ({
                 {/* Avatar Circle */}
                 <div className="relative">
                   <div
-                    className={`w-14 h-14 sm:w-18 sm:h-18 rounded-full flex items-center justify-center transition-all duration-200 ${
+                    className={`w-15 h-15 xs:w-16 xs:h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-all duration-200 ${
                       isSelected
                         ? 'bg-amber-100 ring-3 sm:ring-4 ring-yellow-400 ring-offset-2 ring-offset-[#8A4C22] shadow-[0_0_16px_rgba(250,204,21,0.85)]'
                         : 'bg-[#D9C4A9]/40 hover:bg-[#D9C4A9]/60'
                     }`}
                   >
-                    <span className="text-3xl sm:text-4xl filter drop-shadow">
+                    <span className="text-3xl xs:text-4xl filter drop-shadow">
                       {item.emoji}
                     </span>
                   </div>

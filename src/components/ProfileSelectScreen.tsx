@@ -63,7 +63,7 @@ export const ProfileSelectScreen: React.FC<ProfileSelectScreenProps> = ({
         {/* Left: Big Avatar Photo or 12 Zodiac Companion */}
         <div className="relative shrink-0 flex flex-col items-center">
           <div
-            className={`w-20 h-20 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl border-3 sm:border-4 ${
+            className={`w-22 h-22 xs:w-24 xs:h-24 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl border-3 sm:border-4 ${
               isPrimary ? 'border-amber-400 bg-amber-100/95' : 'border-sky-400 bg-sky-100/95'
             } flex items-center justify-center shadow-md group-hover:scale-105 transition-transform overflow-hidden relative`}
           >
@@ -74,7 +74,7 @@ export const ProfileSelectScreen: React.FC<ProfileSelectScreenProps> = ({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-4xl sm:text-6xl filter drop-shadow-md">
+              <span className="text-5xl xs:text-6xl filter drop-shadow-md">
                 {zodiac.emoji}
               </span>
             )}
@@ -88,7 +88,7 @@ export const ProfileSelectScreen: React.FC<ProfileSelectScreenProps> = ({
           </div>
 
           {/* Zodiac Name Pill Tag */}
-          <div className="mt-1 bg-amber-200/90 border border-amber-500 px-2 sm:px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-black text-amber-950 shadow-xs whitespace-nowrap">
+          <div className="mt-1 bg-amber-200/90 border border-amber-500 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-black text-amber-950 shadow-xs whitespace-nowrap">
             {zodiac.nameKo} ({zodiac.nameEn})
           </div>
         </div>

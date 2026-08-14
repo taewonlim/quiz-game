@@ -547,12 +547,12 @@ export const ZodiacMole: React.FC<ZodiacMoleProps> = ({
   return (
     <div
       id={`hole-container-${holeIndex}`}
-      className="relative flex flex-col items-center justify-end select-none w-full h-[90px] sm:h-[120px] md:h-[135px]"
+      className="relative flex flex-col items-center justify-end select-none w-full h-[110px] xs:h-[118px] sm:h-[135px] md:h-[150px] cursor-pointer"
       onPointerDown={handlePointerDown}
       style={{ touchAction: 'manipulation' }}
     >
       {/* 1. Hole Cavity Background (Dark tunnel behind the animal) - Layer z-0 */}
-      <div className="absolute bottom-2.5 sm:bottom-3 w-[88%] max-w-[130px] h-7 sm:h-9 z-0 flex items-center justify-center pointer-events-none">
+      <div className="absolute bottom-3 sm:bottom-4 w-[92%] max-w-[150px] h-8 sm:h-10 z-0 flex items-center justify-center pointer-events-none">
         <div
           className="w-full h-full rounded-[50%] bg-[#1E0F07] border-2 border-[#381E0E]"
           style={{
@@ -564,14 +564,14 @@ export const ZodiacMole: React.FC<ZodiacMoleProps> = ({
       {/* 2. Animal Sprite - Layer z-10 (Rises up out of the hole smoothly with Pop-Up spring motion) */}
       <div
         id={`mole-sprite-${holeIndex}`}
-        className={`absolute bottom-3.5 sm:bottom-5 z-10 flex flex-col items-center cursor-pointer transform origin-bottom pointer-events-auto ${
+        className={`absolute bottom-4 sm:bottom-6 z-10 flex flex-col items-center cursor-pointer transform origin-bottom pointer-events-auto ${
           isPopped
             ? status === 'hit'
-              ? 'translate-y-[-16px] sm:translate-y-[-22px] scale-110 rotate-1'
+              ? 'translate-y-[-18px] sm:translate-y-[-24px] scale-110 rotate-1'
               : status === 'miss'
               ? 'translate-y-[8px] sm:translate-y-[12px] scale-95 -rotate-2 opacity-85'
               : 'translate-y-0 scale-100 hover:scale-105 active:scale-95'
-            : 'translate-y-[85px] sm:translate-y-[115px] scale-70 opacity-0 pointer-events-none'
+            : 'translate-y-[105px] sm:translate-y-[135px] scale-70 opacity-0 pointer-events-none'
         }`}
         style={{
           transitionProperty: 'transform, opacity',
@@ -583,7 +583,7 @@ export const ZodiacMole: React.FC<ZodiacMoleProps> = ({
         }}
       >
         {/* Full Animal Character Head & Body - Large, High-Def SVG */}
-        <div className="relative w-16 h-16 sm:w-24 sm:h-24 filter drop-shadow-lg overflow-visible">
+        <div className="relative w-20 h-20 xs:w-[84px] xs:h-[84px] sm:w-28 sm:h-28 filter drop-shadow-xl overflow-visible">
           <svg viewBox="0 0 100 85" className="w-full h-full overflow-visible">
             <defs>
               {/* Universal Shading & Color Gradients */}
@@ -700,37 +700,37 @@ export const ZodiacMole: React.FC<ZodiacMoleProps> = ({
         </div>
 
         {/* Small Cute Paws Resting on Dirt Rim */}
-        <div className="absolute bottom-1 w-full flex justify-between px-3 sm:px-5 pointer-events-none z-20">
-          <div className="w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full bg-amber-50 border sm:border-2 border-amber-800 shadow-xs" />
-          <div className="w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full bg-amber-50 border sm:border-2 border-amber-800 shadow-xs" />
+        <div className="absolute bottom-1 w-full flex justify-between px-2.5 xs:px-3.5 sm:px-5 pointer-events-none z-20">
+          <div className="w-4 h-4 xs:w-4.5 xs:h-4.5 sm:w-5 sm:h-5 rounded-full bg-amber-50 border-1.5 sm:border-2 border-amber-800 shadow-xs" />
+          <div className="w-4 h-4 xs:w-4.5 xs:h-4.5 sm:w-5 sm:h-5 rounded-full bg-amber-50 border-1.5 sm:border-2 border-amber-800 shadow-xs" />
         </div>
       </div>
 
       {/* 3. Front Dirt Mound & Clods Rim - Layer z-20 */}
-      <div className="relative z-20 w-[94%] max-w-[140px] h-6 sm:h-8 -mb-1 pointer-events-none flex flex-col items-center justify-end">
+      <div className="relative z-20 w-[96%] max-w-[155px] h-7 sm:h-9 -mb-1 pointer-events-none flex flex-col items-center justify-end">
         <div
-          className="relative w-full h-5 sm:h-6 rounded-[50%] bg-gradient-to-b from-[#5C3218] via-[#4A2510] to-[#34180A] border sm:border-2 border-[#6D3D20] shadow-md flex items-center justify-around px-1"
+          className="relative w-full h-6 sm:h-7 rounded-[50%] bg-gradient-to-b from-[#5C3218] via-[#4A2510] to-[#34180A] border sm:border-2 border-[#6D3D20] shadow-md flex items-center justify-around px-1"
           style={{
             boxShadow: '0 4px 8px rgba(0,0,0,0.4), inset 0 2px 3px rgba(255,255,255,0.2)'
           }}
         >
-          <div className="w-2 h-1.5 rounded-full bg-[#7C4828] opacity-80" />
-          <div className="w-3 h-2 rounded-full bg-[#3B1C0A] opacity-90 -mt-1" />
-          <div className="w-2.5 h-1.5 rounded-full bg-[#7C4828] opacity-80" />
-          <div className="w-1.5 h-1 rounded-full bg-[#A06038] opacity-70" />
+          <div className="w-2.5 h-2 rounded-full bg-[#7C4828] opacity-80" />
+          <div className="w-3.5 h-2.5 rounded-full bg-[#3B1C0A] opacity-90 -mt-1" />
+          <div className="w-3 h-2 rounded-full bg-[#7C4828] opacity-80" />
+          <div className="w-2 h-1.5 rounded-full bg-[#A06038] opacity-70" />
         </div>
 
         {/* Grass Tufts & Mini Wildflowers */}
-        <div className="absolute -bottom-1 w-[104%] h-3 sm:h-4 flex items-center justify-between px-1.5 -z-10">
-          <span className="text-[9px] sm:text-xs transform -translate-y-0.5 filter drop-shadow">
+        <div className="absolute -bottom-1 w-[104%] h-3.5 sm:h-4 flex items-center justify-between px-1.5 -z-10">
+          <span className="text-[10px] sm:text-xs transform -translate-y-0.5 filter drop-shadow">
             {['🌱', '🌿', '🌼', '🍀', '🌸'][holeIndex % 5]}
           </span>
           <div className="flex gap-0.5">
-            <div className="w-1 h-2 sm:h-3 bg-[#4CAF50] rounded-t-full rotate-[-15deg]" />
-            <div className="w-1.2 h-2.5 sm:h-3.5 bg-[#81C784] rounded-t-full" />
-            <div className="w-1 h-2 sm:h-3 bg-[#388E3C] rounded-t-full rotate-[15deg]" />
+            <div className="w-1.2 h-2.5 sm:h-3 bg-[#4CAF50] rounded-t-full rotate-[-15deg]" />
+            <div className="w-1.5 h-3 sm:h-3.5 bg-[#81C784] rounded-t-full" />
+            <div className="w-1.2 h-2.5 sm:h-3 bg-[#388E3C] rounded-t-full rotate-[15deg]" />
           </div>
-          <span className="text-[9px] sm:text-xs transform -translate-y-0.5 filter drop-shadow">
+          <span className="text-[10px] sm:text-xs transform -translate-y-0.5 filter drop-shadow">
             {['🍄', '🌸', '🌱', '🌼', '🍀'][(holeIndex + 2) % 5]}
           </span>
         </div>
@@ -739,7 +739,7 @@ export const ZodiacMole: React.FC<ZodiacMoleProps> = ({
       {/* 4. Front Signboard Capsule - Layer z-30 */}
       <div
         id={`sign-board-${holeIndex}`}
-        className={`relative z-30 -mt-1 sm:-mt-1.5 px-2.5 sm:px-4 py-0.5 sm:py-1 min-w-[56px] sm:min-w-[80px] max-w-[94%] text-center rounded-full font-black text-sm sm:text-lg transition-all duration-200 select-none shadow-md border-2 sm:border-3 ${
+        className={`relative z-30 -mt-1 sm:-mt-1.5 px-3 sm:px-4 py-1 sm:py-1.5 min-w-[64px] sm:min-w-[85px] max-w-[96%] text-center rounded-full font-black text-base sm:text-lg transition-all duration-200 select-none shadow-md border-2 sm:border-3 ${
           isHinted
             ? 'bg-amber-300 border-amber-500 text-amber-950 ring-2 sm:ring-4 ring-yellow-400 ring-offset-1 animate-bounce scale-105'
             : isPopped
@@ -752,7 +752,7 @@ export const ZodiacMole: React.FC<ZodiacMoleProps> = ({
             : '0 3px 6px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.9)'
         }}
       >
-        <span className="truncate block font-black tracking-tight">{text || zodiac.name}</span>
+        <span className="truncate block font-black text-base sm:text-lg tracking-tight">{text || zodiac.name}</span>
       </div>
     </div>
   );
