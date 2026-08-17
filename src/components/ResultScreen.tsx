@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { SubjectMode, TwinProfile, Sticker, DifficultyLevel } from '../types';
 import { ZODIAC_MAP } from '../data/zodiacData';
@@ -15,7 +15,9 @@ import {
   Sliders,
   Sparkles,
   Award,
-  Crown
+  Crown,
+  PartyPopper,
+  X
 } from 'lucide-react';
 import { CartoonForestLandscape } from './CartoonForestLandscape';
 
@@ -60,6 +62,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
 }) => {
   const zodiac = ZODIAC_MAP[activeProfile.avatarZodiac] || ZODIAC_MAP.rat;
   const diffInfo = DIFFICULTY_MAP[difficulty] || DIFFICULTY_MAP.normal;
+  const [showCelebrationModal, setShowCelebrationModal] = useState<boolean>(isNewHighScore && score > 0);
 
   // Calculate Stars (1 to 3)
   const starsCount = score >= 150 ? 3 : score >= 80 ? 2 : 1;
@@ -68,42 +71,90 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
   const subjectHighScore =
     subject === 'hangul' ? activeProfile.hangulHighScore : activeProfile.mathHighScore;
   const currentBestScore = Math.max(subjectHighScore, score);
+  const scoreDiff = Math.max(0, score - previousHighScore);
+
+  // Multi-burst fireworks celebration function
+  const triggerGrandCelebrationFireworks = useCallback(() => {
+    soundEngine.playLevelUp();
+    
+    // Left & Right continuous cannons
+    const count = 200;
+    const defaults = {
+      origin: { y: 0.7 }
+    };
+
+    function fire(particleRatio: number, opts: confetti.Options) {
+      confetti({
+        ...defaults,
+        ...opts,
+        particleCount: Math.floor(count * particleRatio)
+      });
+    }
+
+    fire(0.25, {
+      spread: 26,
+      startVelocity: 55,
+      colors: ['#FFE600', '#FF3366', '#33CCFF']
+    });
+    fire(0.2, {
+      spread: 60,
+      colors: ['#FFD700', '#FF8C00', '#00FFCC']
+    });
+    fire(0.35, {
+      spread: 100,
+      decay: 0.91,
+      scalar: 1.2,
+      colors: ['#FFD700', '#FFA500', '#FF4500', '#9370DB']
+    });
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 25,
+      decay: 0.92,
+      scalar: 1.4
+    });
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 45
+    });
+
+    // Top-left and top-right fountain burst
+    setTimeout(() => {
+      confetti({
+        particleCount: 60,
+        angle: 60,
+        spread: 70,
+        origin: { x: 0.1, y: 0.6 },
+        colors: ['#FFD700', '#FF3366', '#00FF99']
+      });
+      confetti({
+        particleCount: 60,
+        angle: 120,
+        spread: 70,
+        origin: { x: 0.9, y: 0.6 },
+        colors: ['#FFD700', '#3399FF', '#FF00CC']
+      });
+    }, 400);
+  }, []);
 
   useEffect(() => {
     soundEngine.playLevelUp();
     if (isNewHighScore && score > 0) {
       soundEngine.speak(
-        `와우! 신기록이에요! ${activeProfile.customName} 대원이 최고 점수 ${score}점을 달성했어요!`
+        `와우! 대단해요! ${activeProfile.customName} 대원이 최고 신기록 ${score}점을 달성했어요! 축하합니다!`
       );
+      triggerGrandCelebrationFireworks();
     } else {
       soundEngine.speak(
         `대단해요 ${activeProfile.customName} 대원! ${score}점을 획득했어요! 최고예요!`
       );
+      // Gentle standard confetti
+      confetti({
+        particleCount: 40,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
     }
-
-    const duration = isNewHighScore ? 3.5 * 1000 : 2.2 * 1000;
-    const end = Date.now() + duration;
-
-    const frame = () => {
-      confetti({
-        particleCount: isNewHighScore ? 7 : 4,
-        angle: 60,
-        spread: 60,
-        origin: { x: 0 }
-      });
-      confetti({
-        particleCount: isNewHighScore ? 7 : 4,
-        angle: 120,
-        spread: 60,
-        origin: { x: 1 }
-      });
-
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
-      }
-    };
-    frame();
-  }, [activeProfile.customName, score, isNewHighScore]);
+  }, [activeProfile.customName, score, isNewHighScore, triggerGrandCelebrationFireworks]);
 
   // Comparison between twin1 and twin2 for Arcade Hall of Fame
   const t1 = twin1 || activeProfile;
@@ -118,13 +169,13 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
 
       {/* Main Arcade Fairytale Result Board Container */}
       <div
-        className="relative w-full max-w-xl bg-[#7C3F1B]/95 backdrop-blur-md rounded-2xl sm:rounded-[36px] p-3 sm:p-5 shadow-2xl border-3 sm:border-4 border-[#4E240D] flex flex-col items-center text-center my-auto"
+        className="relative w-full max-w-xl bg-[#7C3F1B]/95 backdrop-blur-md rounded-2xl sm:rounded-[36px] p-3 sm:p-5 shadow-2xl border-3 sm:border-4 border-[#4E240D] flex flex-col items-center text-center my-auto z-10"
         style={{
           boxShadow: '0 20px 40px rgba(35, 18, 5, 0.6), inset 0 2px 4px rgba(255,255,255,0.2)'
         }}
       >
         {/* Top Floating Badge & NEW RECORD Banner */}
-        <div className="relative -mt-6 sm:-mt-8 flex flex-col items-center gap-1">
+        <div className="relative -mt-6 sm:-mt-8 flex flex-col items-center gap-1.5">
           <div className="bg-amber-400 border-2 sm:border-4 border-amber-600 px-5 sm:px-8 py-1 sm:py-1.5 rounded-full shadow-xl flex items-center gap-2">
             <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-amber-950" />
             <span className="text-sm sm:text-lg font-black text-amber-950 tracking-tight">
@@ -132,13 +183,19 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
             </span>
           </div>
 
-          {/* Arcade NEW RECORD Badge */}
+          {/* Arcade NEW RECORD Badge with Celebration Trigger */}
           {isNewHighScore && score > 0 && (
-            <div className="bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-300 text-amber-950 border-2 border-yellow-500 px-4 py-0.5 rounded-full text-xs font-black shadow-lg flex items-center gap-1 animate-bounce">
-              <Crown className="w-3.5 h-3.5 text-amber-800" />
-              <span>👑 신기록 달성! (NEW BEST RECORD)</span>
-              <Sparkles className="w-3.5 h-3.5 text-yellow-600" />
-            </div>
+            <button
+              onClick={() => {
+                setShowCelebrationModal(true);
+                triggerGrandCelebrationFireworks();
+              }}
+              className="bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-300 text-amber-950 border-2 border-yellow-500 px-4 py-1 rounded-full text-xs font-black shadow-lg flex items-center gap-1.5 animate-bounce active:scale-95 cursor-pointer"
+            >
+              <Crown className="w-4 h-4 text-amber-800" />
+              <span>👑 최고 신기록 달성! (+{scoreDiff}점 경신)</span>
+              <PartyPopper className="w-4 h-4 text-yellow-700" />
+            </button>
           )}
         </div>
 
@@ -321,6 +378,88 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Spectacular New Record Celebration Modal Overlay */}
+      {showCelebrationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/75 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="relative w-full max-w-md bg-gradient-to-b from-[#FFFDF0] via-[#FFF8E6] to-[#FFEEC2] rounded-3xl p-5 sm:p-7 shadow-[0_25px_60px_rgba(0,0,0,0.6)] border-4 border-yellow-400 text-center flex flex-col items-center">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowCelebrationModal(false)}
+              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-stone-200/90 text-stone-700 hover:bg-stone-300 flex items-center justify-center cursor-pointer shadow-sm"
+              title="닫기"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Glowing Crown and Trophy Animation */}
+            <div className="relative my-2 flex items-center justify-center">
+              <div className="absolute inset-0 bg-yellow-400/40 rounded-full blur-xl scale-150 animate-pulse" />
+              <div className="relative text-6xl sm:text-7xl animate-bounce">
+                👑
+              </div>
+              <div className="absolute -bottom-2 -right-2 text-4xl sm:text-5xl animate-pulse">
+                🏆
+              </div>
+            </div>
+
+            {/* Celebration Headline */}
+            <div className="bg-gradient-to-r from-amber-500 to-yellow-500 text-amber-950 font-black px-4 py-1 rounded-full text-xs sm:text-sm shadow mb-2 flex items-center gap-1">
+              <Sparkles className="w-4 h-4" />
+              <span>최고 신기록 달성 명예의 전당!</span>
+              <Sparkles className="w-4 h-4" />
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl font-black text-amber-950 tracking-tight my-1">
+              축하해요, {activeProfile.customName} 대원!
+            </h2>
+
+            <p className="text-xs sm:text-sm font-bold text-amber-800 mb-3">
+              이전 최고 기록을 뛰어넘어 새로운 역사를 썼어요! 🎉
+            </p>
+
+            {/* Score Highlight Box */}
+            <div className="w-full bg-white/95 rounded-2xl p-3 border-2 border-yellow-300 shadow-inner flex items-center justify-around my-1.5">
+              <div className="text-center">
+                <span className="text-[11px] font-bold text-stone-500 block">이전 기록</span>
+                <span className="text-base sm:text-lg font-black text-stone-600 line-through">
+                  {previousHighScore}점
+                </span>
+              </div>
+              <div className="text-2xl font-black text-amber-500">➔</div>
+              <div className="text-center">
+                <span className="text-[11px] font-black text-amber-600 block">새로운 신기록</span>
+                <span className="text-2xl sm:text-3xl font-black text-amber-600">
+                  {score}점
+                </span>
+              </div>
+            </div>
+
+            {scoreDiff > 0 && (
+              <div className="bg-emerald-100 border border-emerald-300 text-emerald-800 font-black text-xs px-3 py-1 rounded-full my-2">
+                🌟 +{scoreDiff}점 대폭 상승!
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 w-full mt-3">
+              <button
+                onClick={triggerGrandCelebrationFireworks}
+                className="flex-1 bg-gradient-to-r from-yellow-400 to-amber-400 hover:from-yellow-300 hover:to-amber-300 text-amber-950 font-black py-2.5 px-3 rounded-2xl shadow-md border border-yellow-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm cursor-pointer active:scale-95 transition-all"
+              >
+                <PartyPopper className="w-4 h-4 text-amber-900" />
+                <span>폭죽 다시 터뜨리기 🎉</span>
+              </button>
+              <button
+                onClick={() => setShowCelebrationModal(false)}
+                className="bg-amber-950 hover:bg-stone-900 text-white font-black py-2.5 px-4 rounded-2xl shadow-md text-xs sm:text-sm cursor-pointer active:scale-95 transition-all"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

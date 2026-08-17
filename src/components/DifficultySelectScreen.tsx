@@ -130,23 +130,30 @@ export const DifficultySelectScreen: React.FC<DifficultySelectScreenProps> = ({
                   {diff.description}
                 </p>
 
-                {/* Feature Specs */}
+                {/* Feature Specs & Point Rewards */}
                 <div className="flex flex-col gap-1 text-[10px] sm:text-xs font-extrabold text-stone-800 pt-1.5 border-t border-amber-200">
-                  <div className="flex items-center justify-center gap-1 bg-white/80 px-1.5 py-0.5 rounded border border-amber-200">
-                    <Clock className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                    <span>{diff.timeLimit}초</span>
+                  <div className="flex items-center justify-between gap-1 bg-white/90 px-2 py-0.5 rounded border border-amber-200">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                      <span>{diff.timeLimit}초</span>
+                    </span>
+                    <span className={`px-1.5 py-0.2 rounded font-black text-[10px] sm:text-xs ${
+                      diff.id === 'hard' ? 'bg-rose-100 text-rose-800' : diff.id === 'normal' ? 'bg-amber-100 text-amber-900' : 'bg-emerald-100 text-emerald-900'
+                    }`}>
+                      {diff.pointsMultiplier} 득점
+                    </span>
                   </div>
-                  <div className="flex items-center justify-center gap-1 bg-white/80 px-1.5 py-0.5 rounded border border-amber-200 text-[9px] sm:text-[11px]">
-                    <Users className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                    <span className="truncate">{diff.moleCountRange}</span>
+                  <div className="flex items-center justify-center gap-1 bg-amber-50/90 px-1.5 py-0.5 rounded border border-amber-200 text-[9px] sm:text-[11px] font-black text-amber-900">
+                    <Sparkles className="w-3 h-3 text-amber-600 shrink-0" />
+                    <span className="truncate">{diff.pointsDescription}</span>
                   </div>
                 </div>
 
                 {/* Extra info for hard */}
                 {diff.id === 'hard' && (
-                  <div className="mt-1 flex items-center justify-center gap-0.5 text-[9px] sm:text-[10px] font-black text-rose-700 bg-rose-50 px-1 py-0.5 rounded border border-rose-200">
+                  <div className="mt-1 flex items-center justify-center gap-0.5 text-[9px] sm:text-[10px] font-black text-rose-700 bg-rose-50 px-1 py-0.5 rounded border border-rose-200 animate-pulse">
                     <Flame className="w-3 h-3 text-rose-500" />
-                    <span>속도 빠름!</span>
+                    <span>최고 보너스 & 3배 피버!</span>
                   </div>
                 )}
               </div>

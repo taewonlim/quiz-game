@@ -15,6 +15,8 @@ export interface DifficultyInfo {
   timeLimit: number;
   moleCountRange: string;
   targetTag: string;
+  pointsMultiplier: string;
+  pointsDescription: string;
 }
 
 export type ZodiacId =

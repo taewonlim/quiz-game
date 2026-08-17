@@ -20,13 +20,27 @@ interface GameScreenProps {
 
 const TOTAL_HOLES = 12;
 
-// Extra fallback pools to guarantee variety
+// Extra fallback pools to guarantee variety and 100% unique options
 const EXTRA_HANGUL_CHARS = [
   '가', '나', '다', '라', '마', '바', '사', '아', '자', '차', '카', '타', '파', '하',
   '고', '노', '도', '로', '모', '보', '소', '오', '조', '초', '코', '토', '포', '호',
   '구', '누', '두', '루', '무', '부', '수', '우', '주', '추', '쿠', '투', '푸', '후',
-  '산', '달', '별', '물', '불', '흙', '풀', '꽃', '새', '해', '눈', '비', '밤', '봄'
+  '기', '니', '디', '리', '미', '비', '시', '이', '지', '치', '키', '티', '피', '히',
+  '개', '새', '배', '대', '래', '매', '태', '패', '해', '재', '채',
+  '산', '달', '별', '물', '불', '흙', '풀', '꽃', '새', '해', '눈', '비', '밤', '봄',
+  '빵', '밥', '김', '면', '국', '죽', '떡', '옷', '신', '발', '손', '귀', '입', '코',
+  '문', '창', '집', '길', '숲', '들', '꿈', '별', '빛', '솔', '돌', '말', '소', '양'
 ];
+
+// Helper: Fisher-Yates In-Place Shuffle
+function shuffleArray<T>(array: T[]): T[] {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 export const GameScreen: React.FC<GameScreenProps> = ({
   subject,
@@ -55,15 +69,66 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   const [selectedThemeId, setSelectedThemeId] = useState<string | null>(null);
   const [showThemePicker, setShowThemePicker] = useState<boolean>(false);
 
-  // Questions queue combining standard and custom photo questions
-  const questionsListRef = useRef<Question[]>([]);
+  // Non-Repetition Smart Question Deck Manager
+  const allMasterQuestionsRef = useRef<Question[]>([]);
+  const questionDeckRef = useRef<Question[]>([]);
+  const recentQuestionIdsRef = useRef<string[]>([]);
+
+  // Function to initialize and shuffle master questions
+  const refillAndShuffleDeck = useCallback((excludeId?: string) => {
+    const allQuestions = allMasterQuestionsRef.current;
+    if (allQuestions.length === 0) return;
+
+    const shuffled: Question[] = shuffleArray<Question>(allQuestions);
+    // Ensure the first question in new deck is not the same as the previous question
+    if (excludeId && shuffled.length > 1 && shuffled[0]?.id === excludeId) {
+      const swapIdx = Math.floor(Math.random() * (shuffled.length - 1)) + 1;
+      const temp = shuffled[0];
+      shuffled[0] = shuffled[swapIdx];
+      shuffled[swapIdx] = temp;
+    }
+    questionDeckRef.current = shuffled;
+  }, []);
+
+  // Function to pop next distinct question from deck
+  const getNextQuestionFromDeck = useCallback((): Question => {
+    if (questionDeckRef.current.length === 0) {
+      const lastId = recentQuestionIdsRef.current[recentQuestionIdsRef.current.length - 1];
+      refillAndShuffleDeck(lastId);
+    }
+
+    const nextQ = questionDeckRef.current.pop() || allMasterQuestionsRef.current[0] || (subject === 'hangul' ? HANGUL_QUESTIONS[0] : MATH_QUESTIONS[0]);
+    
+    // Track recent IDs (keep last 25)
+    recentQuestionIdsRef.current = [...recentQuestionIdsRef.current.slice(-24), nextQ.id];
+    return nextQ;
+  }, [subject, refillAndShuffleDeck]);
+
+  // Current Question state
+  const [currentQuestion, setCurrentQuestion] = useState<Question>(() => {
+    const baseList = subject === 'hangul' ? HANGUL_QUESTIONS : MATH_QUESTIONS;
+    const matchingCustom = customQuestions.filter((q) => q.subject === subject);
+    const combined = [...matchingCustom, ...baseList];
+    allMasterQuestionsRef.current = combined;
+    const shuffled = shuffleArray(combined);
+    questionDeckRef.current = shuffled.slice(1);
+    const initialQ = shuffled[0] || baseList[0];
+    recentQuestionIdsRef.current = [initialQ.id];
+    return initialQ;
+  });
+
+  // Rebuild deck when subject or custom questions change
   useEffect(() => {
     const baseList = subject === 'hangul' ? HANGUL_QUESTIONS : MATH_QUESTIONS;
     const matchingCustom = customQuestions.filter((q) => q.subject === subject);
-    questionsListRef.current = [...matchingCustom, ...baseList].sort(() => Math.random() - 0.5);
+    const combined = [...matchingCustom, ...baseList];
+    allMasterQuestionsRef.current = combined;
+    const shuffled = shuffleArray(combined);
+    const firstQ = shuffled[0] || baseList[0];
+    questionDeckRef.current = shuffled.slice(1);
+    recentQuestionIdsRef.current = [firstQ.id];
+    setCurrentQuestion(firstQ);
   }, [subject, customQuestions]);
-
-  const [questionIndex, setQuestionIndex] = useState<number>(0);
 
   // Floating score feedback particles
   const [floatingTexts, setFloatingTexts] = useState<
@@ -87,12 +152,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   // Inactivity Hint Timer
   const [showHint, setShowHint] = useState<boolean>(false);
   const lastActionTimeRef = useRef<number>(Date.now());
-
-  // Current Question
-  const currentQuestion =
-    questionsListRef.current.length > 0
-      ? questionsListRef.current[questionIndex % questionsListRef.current.length]
-      : (subject === 'hangul' ? HANGUL_QUESTIONS[0] : MATH_QUESTIONS[0]);
 
   // Calculate Stage Level based on Score (1~6 levels)
   const calculateLevel = (currentScore: number) => {
@@ -138,25 +197,25 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
   const currentTheme = getCurrentTheme();
 
-  // Generate UNIQUE and DIVERSE wrong options pool
-  const generateDiverseWrongPool = useCallback((q: Question, neededCount: number): string[] => {
+  // Generate 100% STRICTLY UNIQUE distractor pool (NO duplicates among wrong holes, NO collision with correct answer)
+  const generateStrictUniqueWrongAnswers = useCallback((q: Question, neededCount: number): string[] => {
     const correct = q.correctAnswer.trim();
     const uniquePool = new Set<string>();
 
-    // 1. First add question's own wrong answers
+    // 1. Add question's own defined wrong answers (filtering out duplicates & correct answer)
     if (q.wrongAnswers && q.wrongAnswers.length > 0) {
-      q.wrongAnswers.forEach((ans) => {
+      for (const ans of q.wrongAnswers) {
         const cleaned = ans.trim();
         if (cleaned && cleaned !== correct) {
           uniquePool.add(cleaned);
+          if (uniquePool.size >= neededCount) break;
         }
-      });
+      }
     }
 
-    // 2. If subject is math and correct answer is a number, generate surrounding unique numbers
+    // 2. If subject is math, generate nearby unique numbers
     const correctNum = parseInt(correct, 10);
     if (!isNaN(correctNum) && q.subject === 'math') {
-      // Build candidate numbers around the correct number
       const mathCandidates = [
         correctNum + 1,
         correctNum - 1,
@@ -167,28 +226,28 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         correctNum + 4,
         correctNum - 4,
         correctNum + 5,
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 20
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
       ];
 
       for (const num of mathCandidates) {
-        if (num > 0 && num !== correctNum) {
+        if (num >= 0 && num !== correctNum) {
           uniquePool.add(num.toString());
-          if (uniquePool.size >= neededCount + 6) break;
+          if (uniquePool.size >= neededCount + 10) break;
         }
       }
     } else {
-      // 3. For hangul or word questions, draw from extra hangul syllables
-      const shuffledExtra = [...EXTRA_HANGUL_CHARS].sort(() => Math.random() - 0.5);
+      // 3. For hangul or words, draw from large extra hangul syllables
+      const shuffledExtra = shuffleArray(EXTRA_HANGUL_CHARS);
       for (const char of shuffledExtra) {
         if (char !== correct) {
           uniquePool.add(char);
-          if (uniquePool.size >= neededCount + 6) break;
+          if (uniquePool.size >= neededCount + 10) break;
         }
       }
     }
 
-    // Convert Set to Array and shuffle
-    return Array.from(uniquePool).sort(() => Math.random() - 0.5);
+    // Convert Set to Array and shuffle to guarantee diverse order
+    return shuffleArray(Array.from(uniquePool)).slice(0, neededCount);
   }, []);
 
   // Spawn new wave of moles for current question
@@ -196,24 +255,22 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     if (!currentQuestion) return;
 
     const count = getActiveMolesCount(stageLevel, isFever);
-    const availableHoleIndexes = Array.from({ length: TOTAL_HOLES }, (_, i) => i).sort(
-      () => Math.random() - 0.5
-    );
+    const availableHoleIndexes = shuffleArray(Array.from({ length: TOTAL_HOLES }, (_, i) => i));
     const chosenHoles = availableHoleIndexes.slice(0, count);
 
     // Randomize 12 Zodiac assignments
-    const shuffledZodiacs = [...ZODIAC_LIST].sort(() => Math.random() - 0.5);
-
-    // Prepare distinct wrong answer pool
-    const wrongAnswersPool = generateDiverseWrongPool(currentQuestion, count);
-    let wrongPoolIndex = 0;
+    const shuffledZodiacs = shuffleArray(ZODIAC_LIST);
 
     // Pick target hole(s) for correct answer
-    // In Fever mode: 2 target holes (or more)
+    // In Fever mode: 2 target holes (if count >= 2)
     // In Normal mode: exactly 1 target hole
-    const targetHoles = isFever
-      ? chosenHoles.slice(0, Math.min(2, chosenHoles.length))
-      : [chosenHoles[0]];
+    const targetCount = isFever ? Math.min(2, chosenHoles.length) : 1;
+    const targetHoles = chosenHoles.slice(0, targetCount);
+    const nonTargetHoles = chosenHoles.slice(targetCount);
+
+    // Prepare strictly unique wrong answers for all non-target holes
+    const uniqueWrongAnswers = generateStrictUniqueWrongAnswers(currentQuestion, nonTargetHoles.length);
+    let wrongAnswerIndex = 0;
 
     const newMoles: MoleSpot[] = Array.from({ length: TOTAL_HOLES }, (_, i) => {
       const isChosen = chosenHoles.includes(i);
@@ -236,9 +293,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       if (isTarget) {
         answerText = currentQuestion.correctAnswer;
       } else {
-        // Assign next unique wrong answer from the pool
-        answerText = wrongAnswersPool[wrongPoolIndex % wrongAnswersPool.length] || '1';
-        wrongPoolIndex++;
+        // Assign guaranteed UNIQUE wrong answer
+        answerText = uniqueWrongAnswers[wrongAnswerIndex] || '1';
+        wrongAnswerIndex++;
       }
 
       return {
@@ -257,7 +314,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     setShowHint(false);
     lastActionTimeRef.current = Date.now();
     soundEngine.playPop();
-  }, [currentQuestion, stageLevel, isFever, getActiveMolesCount, generateDiverseWrongPool]);
+  }, [currentQuestion, stageLevel, isFever, getActiveMolesCount, generateStrictUniqueWrongAnswers]);
 
   // Refs to track latest stats safely for game completion without calling parent setState inside local state reducer
   const hasFinishedRef = useRef<boolean>(false);
@@ -276,7 +333,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   // Initial spawn when question or stage changes
   useEffect(() => {
     spawnMoles();
-  }, [questionIndex, stageLevel, spawnMoles]);
+  }, [currentQuestion, stageLevel, spawnMoles]);
 
   // Game Countdown Timer & Clean Finish Handler
   useEffect(() => {
@@ -372,11 +429,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         setMaxCombo(newCombo);
       }
 
-      // Base points + Combo bonus (x2 in Fever)
-      const basePoints = 10;
-      const comboBonus = newCombo > 1 ? (newCombo - 1) * 2 : 0;
-      const feverMultiplier = isFever ? 2 : 1;
-      const earned = (basePoints + comboBonus) * feverMultiplier;
+      // Difficulty Differentiated Scoring Engine
+      // Easy (새싹): Base 10 pts, combo +2 pts, Fever x2
+      // Normal (신남): Base 15 pts, combo +3 pts, stage bonus +2 pts/lvl, Fever x2
+      // Hard (용감): Base 25 pts, combo +5 pts, stage bonus +5 pts/lvl, Fever x3
+      const basePoints = difficulty === 'easy' ? 10 : difficulty === 'hard' ? 25 : 15;
+      const comboRate = difficulty === 'easy' ? 2 : difficulty === 'hard' ? 5 : 3;
+      const comboBonus = newCombo > 1 ? (newCombo - 1) * comboRate : 0;
+      const stageBonus = difficulty === 'easy' ? 0 : difficulty === 'hard' ? stageLevel * 5 : stageLevel * 2;
+      const feverMultiplier = isFever ? (difficulty === 'hard' ? 3 : 2) : 1;
+      const earned = (basePoints + comboBonus + stageBonus) * feverMultiplier;
 
       const nextScore = score + earned;
       setScore(nextScore);
@@ -390,8 +452,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         addFloatingText(`STAGE ${nextLevel}! 🌟`, '#F59E0B');
       }
 
-      // Show floating text
-      addFloatingText(`+${earned}점! ${newCombo > 1 ? `${newCombo}콤보!` : '정답!'}`, '#10B981');
+      // Show floating text with difficulty tag
+      const diffTag = difficulty === 'hard' ? '⚡2.5x' : difficulty === 'normal' ? '🌿1.5x' : '';
+      addFloatingText(`+${earned}점! ${newCombo > 1 ? `${newCombo}콤보!` : '정답!'} ${diffTag}`, '#10B981');
 
       // Check Fever threshold
       if (newCombo % 3 === 0 && !isFever) {
@@ -412,9 +475,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         origin: { y: 0.7 }
       });
 
-      // Advance to next question after short delay
+      // Advance to next distinct question after short delay
       setTimeout(() => {
-        setQuestionIndex((prev) => prev + 1);
+        const nextQ = getNextQuestionFromDeck();
+        setCurrentQuestion(nextQ);
       }, 350);
     } else {
       // Wrong Whack
@@ -480,9 +544,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[3]" />
           </button>
           <div>
-            <span className="font-black text-xs sm:text-base drop-shadow-md block leading-tight">
-              {subject === 'hangul' ? '가나다 숲' : '수리수리동굴'}
-            </span>
+            <div className="flex items-center gap-1">
+              <span className="font-black text-xs sm:text-base drop-shadow-md block leading-tight">
+                {subject === 'hangul' ? '가나다 숲' : '수리수리동굴'}
+              </span>
+              <span className={`text-[9px] sm:text-[10px] font-black px-1.5 py-0.2 rounded-full border ${
+                difficulty === 'hard' ? 'bg-rose-500 text-white border-rose-300' : difficulty === 'normal' ? 'bg-amber-400 text-amber-950 border-amber-200' : 'bg-emerald-500 text-white border-emerald-300'
+              }`}>
+                {difficulty === 'hard' ? '⚡2.5x' : difficulty === 'normal' ? '🌿1.5x' : '🌱1.0x'}
+              </span>
+            </div>
             <span className="text-[10px] sm:text-[11px] text-amber-200 font-bold hidden sm:inline-block">
               {activeProfile.customName} ({diffLabel} • {currentTheme.timeTag})
             </span>

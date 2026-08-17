@@ -11,7 +11,9 @@ export const DIFFICULTY_LIST: DifficultyInfo[] = [
     badgeColor: 'bg-emerald-500 text-white border-emerald-300',
     timeLimit: 75,
     moleCountRange: '3~4마리 출현 (느림)',
-    targetTag: '5~6세 처음 시작'
+    targetTag: '5~6세 처음 시작',
+    pointsMultiplier: 'x1.0',
+    pointsDescription: '기본 10점 + 콤보 보너스'
   },
   {
     id: 'normal',
@@ -23,19 +25,23 @@ export const DIFFICULTY_LIST: DifficultyInfo[] = [
     badgeColor: 'bg-amber-500 text-amber-950 border-amber-300',
     timeLimit: 60,
     moleCountRange: '4~6마리 출현 (보통)',
-    targetTag: '6~7세 추천 모드'
+    targetTag: '6~7세 추천 모드',
+    pointsMultiplier: 'x1.5',
+    pointsDescription: '기본 15점 + 스테이지 & 콤보 UP'
   },
   {
     id: 'hard',
     nameKo: '용감한 숲길 (도전)',
     nameEn: 'Brave Trail (Hard)',
     subTitle: '번개처럼 빠른 쏙쏙 스피드 퀴즈',
-    description: '두더지 6~8마리가 빠르게 출현해요! 화려한 모자/왕관 두더지와 최고 점수에 도전해요!',
-    icon: '🌲',
+    description: '두더지 6~8마리가 빠르게 출현해요! 최고 득점과 짜릿한 피버 3배에 도전해요!',
+    icon: '⚡',
     badgeColor: 'bg-rose-600 text-white border-rose-300',
     timeLimit: 45,
     moleCountRange: '6~8마리 출현 (빠름)',
-    targetTag: '스피드 고수 도전'
+    targetTag: '스피드 고수 도전',
+    pointsMultiplier: 'x2.5',
+    pointsDescription: '기본 25점 + 피버 3배 대박 보너스!'
   }
 ];
 
